@@ -17,7 +17,7 @@ class MainFrame(wx.Frame):
     def __init__(self, parent):
         """构造函数"""
 
-        wx.Frame.__init__(self, parent, -1, APP_TITLE)
+        wx.Frame.__init__(self, parent, -1, APP_TITLE, style=wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
         self.SetBackgroundColour(wx.Colour(224, 224, 224))
         self.SetSize((520, 320))
         self.Center()
