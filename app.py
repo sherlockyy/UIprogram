@@ -33,7 +33,7 @@ class MainFrame(wx.Frame):
         font = wx.Font(12, wx.ROMAN, wx.NORMAL, wx.NORMAL)
         st_intro = wx.StaticText(self, -1, "Give your opinion score after watching the video", pos=(10, 80),
                                  size=(500, -1), style=wx.ALIGN_CENTER)
-        st_score = wx.StaticText(self, -1, "great|5, good|4, norm|3, poor|2, terr|1", pos=(10, 110), size=(500, -1),
+        st_score = wx.StaticText(self, -1, "5(excellent), 4(good), 3(fair）, 2（poor）, 1（bad）", pos=(10, 110), size=(500, -1),
                                  style=wx.ALIGN_CENTER)
         st_intro.SetFont(font)
         st_score.SetFont(font)
@@ -45,17 +45,23 @@ class MainFrame(wx.Frame):
         tc_id.Bind(wx.EVT_TEXT_ENTER, self.OnEnterPressed)
 
         # buttons for scores choices
-        btn_1 = wx.Button(self, -1, '1', pos=(115, 150), size=(50, 25))
-        btn_2 = wx.Button(self, -1, '2', pos=(175, 150), size=(50, 25))
+        btn_1 = wx.Button(self, -1, '1', pos=(355, 150), size=(50, 25))
+        btn_2 = wx.Button(self, -1, '2', pos=(295, 150), size=(50, 25))
         btn_3 = wx.Button(self, -1, '3', pos=(235, 150), size=(50, 25))
-        btn_4 = wx.Button(self, -1, '4', pos=(295, 150), size=(50, 25))
-        btn_5 = wx.Button(self, -1, '5', pos=(355, 150), size=(50, 25))
+        btn_4 = wx.Button(self, -1, '4', pos=(175, 150), size=(50, 25))
+        btn_5 = wx.Button(self, -1, '5', pos=(115, 150), size=(50, 25))
 
         btn_1.Bind(wx.EVT_BUTTON, self.OnScoreClicked)
         btn_2.Bind(wx.EVT_BUTTON, self.OnScoreClicked)
         btn_3.Bind(wx.EVT_BUTTON, self.OnScoreClicked)
         btn_4.Bind(wx.EVT_BUTTON, self.OnScoreClicked)
         btn_5.Bind(wx.EVT_BUTTON, self.OnScoreClicked)
+
+        # text for progress bar
+        self.progress_bar = "Current Progress : 0 / 0"
+        self.st_bar = wx.StaticText(self, -1, pos=(10, 200), size=(500, -1), style=wx.ALIGN_CENTER)
+        self.st_bar.SetFont(font)
+        self.st_bar.SetLabel(self.progress_bar)
 
         # buttons for move
         btn_pre = wx.Button(self, -1, "Previous", pos=(100, 250), size=(100, 25))
@@ -79,28 +85,58 @@ class MainFrame(wx.Frame):
         """输入用户名事件函数"""
         if self.user_id is None:
             self.user_id = event.GetString()
-            self.VideoSeq = VideoSeq()
+            self.VideoSeq = VideoSeq(self.user_id)
             self.VideoSeq.play()
+
+            self.progress_bar = f"Current Progress : {self.VideoSeq.step+1} / {self.VideoSeq.length}"
+            self.st_bar.SetLabel(self.progress_bar)
 
     def OnScoreClicked(self, event):
         """打分事件函数"""
-        btn = event.GetEventObject().GetLabel()
-        print("Label of pressed button = ", btn)
-        self.VideoSeq.scoring(int(btn))
+        if self.user_id is None:
+            self.NoUserWarning()
+        else:
+            btn = event.GetEventObject().GetLabel()
+            # print("Label of pressed button = ", btn)
+            self.VideoSeq.scoring(int(btn))
+            exceed = self.VideoSeq.move(1)
+            self.UpdateProgress()
+            if exceed:
+                self.LastOneWarning()
 
     def OnMoveClicked(self, event):
         """前后移动事件函数"""
-        btn = event.GetEventObject().GetLabel()
-        move_dict = {"Previous": -1, "Next": 1}
-        step = move_dict[btn]
-        print("Move Label of pressed button = ", btn)
-        self.VideoSeq.move(step)
+        if self.user_id is None:
+            self.NoUserWarning()
+        else:
+            btn = event.GetEventObject().GetLabel()
+            move_dict = {"Previous": -1, "Next": 1}
+            step = move_dict[btn]
+            # print("Move Label of pressed button = ", btn)
+            exceed = self.VideoSeq.move(step)
+            self.UpdateProgress()
+            if exceed:
+                self.LastOneWarning()
 
-    def OnClose(self, evt):
+    def OnClose(self, event):
         """关闭窗口事件函数"""
-        dlg = wx.MessageDialog(None, u'确定要关闭本窗口？', u'操作提示', wx.YES_NO | wx.ICON_QUESTION)
+        dlg = wx.MessageDialog(None, "Comfirm exit?", "Operation prompt", wx.YES_NO | wx.ICON_QUESTION)
         if dlg.ShowModal() == wx.ID_YES:
+            if self.VideoSeq is not None:
+                self.VideoSeq.finish()
             self.Destroy()
+
+    def UpdateProgress(self):
+        self.progress_bar = f"Current Progress : {self.VideoSeq.step + 1} / {self.VideoSeq.length}"
+        self.st_bar.SetLabel(self.progress_bar)
+
+    def NoUserWarning(self):
+        dlg = wx.MessageDialog(None, "Please enter a username first ...", "No user name", wx.OK | wx.ICON_QUESTION)
+        dlg.ShowModal()
+
+    def LastOneWarning(self):
+        dlg = wx.MessageDialog(None, "This is the last video ...", "No more videos", wx.OK | wx.ICON_QUESTION)
+        dlg.ShowModal()
 
 
 class MainApp(wx.App):
