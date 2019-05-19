@@ -3,7 +3,9 @@ subjective experiment UI for windows
 
 ## Requirements
 wxPython
+
 pywin32
+
 PyInstaller
 
 ## Instructions
